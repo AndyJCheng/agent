@@ -1,6 +1,7 @@
 package com.example.chat;
 
 import java.util.Map;
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +19,7 @@ public class ChatController {
     }
 
     @PostMapping
-    public Map<String, String> chat(@RequestBody ChatRequest request) {
+    public Map<String, String> chat(@Valid @RequestBody ChatRequest request) {
         return Map.of(
                 "provider", request.providerOrDefault(),
                 "reply", chatService.chat(request));

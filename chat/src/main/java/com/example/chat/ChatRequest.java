@@ -1,10 +1,15 @@
 package com.example.chat;
 
-public record ChatRequest(String message, String provider, String model) {
+import java.util.Locale;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record ChatRequest(
+        @NotBlank @Size(max = 16000) String message,
+        @Size(max = 32) String provider,
+        @Size(max = 200) String model) {
     public String providerOrDefault() {
-        if (provider == null || provider.isBlank()) {
-            return "ollama";
-        }
-        return provider.toLowerCase();
+        return provider == null || provider.isBlank()
+                ? "ollama" : provider.strip().toLowerCase(Locale.ROOT);
     }
 }
