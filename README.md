@@ -3,7 +3,7 @@
 Spring AI experiments with Java 17, Spring Boot 3.3.5 and Spring AI 1.0.0-M6.
 
 - [chat](chat/README.md): HTTP chat API with Ollama and opt-in OpenAI support.
-- [tool](tool/README.md): Ollama tool-calling agent with a restricted URL status checker.
+- [tool](tool/README.md): OpenAI or Ollama tool-calling agent with a restricted URL status checker.
 - `tool/url_checker.py`: independent asynchronous URL checker. Install its
   dependency with `python3 -m pip install -r tool/requirements.txt`, then run
   `python3 tool/url_checker.py`. Only HTTP 2xx responses count as success.

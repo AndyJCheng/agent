@@ -20,7 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.ai.openai.api-key=")
 class ToolApplicationTests {
 	@Autowired AgentService agentService;
 	@MockBean OllamaChatModel model;

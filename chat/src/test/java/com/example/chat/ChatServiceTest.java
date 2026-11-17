@@ -55,8 +55,11 @@ class ChatServiceTest {
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(client).call(prompt.capture());
         assertThat(prompt.getValue().getOptions().getModel()).isEqualTo("custom-model");
-        assertThat(prompt.getValue().getContents()).isEqualTo("Hello");
-        assertThat(prompt.getValue().getInstructions()).hasSize(1);
+        assertThat(prompt.getValue().getInstructions().get(1).getText()).isEqualTo("Hello");
+        assertThat(prompt.getValue().getInstructions()).hasSize(2);
+        var options = (org.springframework.ai.openai.OpenAiChatOptions) prompt.getValue().getOptions();
+        assertThat(options.getToolCallbacks()).hasSize(1);
+        assertThat(options.isInternalToolExecutionEnabled()).isFalse();
     }
 
     @Test

@@ -25,7 +25,10 @@ mvn spring-boot:run -Dspring-boot.run.profiles=openai
 
 This enables OpenAI alongside Ollama. The default request provider remains Ollama.
 OpenAI embedding, image and audio clients are disabled because this app only uses chat.
-The URL tool is registered for Ollama requests only, not OpenAI requests.
+Both providers can call the URL tool and share the same execution limits.
+Set `OPENAI_MODEL` to select the configured OpenAI model (default `gpt-4o-mini`);
+the request's `model` field can override it. Use a model available to your account
+that supports Chat Completions tool calling.
 
 ## Requests
 
@@ -34,7 +37,7 @@ curl http://localhost:8080/api/chat/health
 
 curl -X POST http://localhost:8080/api/chat \
   -H 'Content-Type: application/json' \
-  -d '{"message":"Hello","provider":"openai"}'
+  -d '{"message":"检查 https://example.com 是否可用，并解释状态码","provider":"openai"}'
 
 curl -X POST http://localhost:8080/api/chat \
   -H 'Content-Type: application/json' \
@@ -46,7 +49,7 @@ curl -X POST http://localhost:8080/api/chat \
 ignored. `model` optionally overrides the provider's configured model for this
 request; omitted or blank values preserve the configured default.
 
-For Ollama, the model decides whether a question needs the `checkUrlStatus` Java
+For either provider, the model decides whether a question needs the `checkUrlStatus` Java
 tool and explains its returned status (2xx means success; redirects and other
 statuses do not). Tool usage is not forced. To limit outbound requests, the tool
 accepts only exact HTTPS hostnames configured via `URL_CHECK_ALLOWED_HOSTS`
@@ -73,7 +76,7 @@ mvn test
 
 Tests exercise configuration, validation, provider routing, model overrides,
 error responses and tool registration without contacting model services or URLs.
-Actual tool selection and explanations depend on the running Ollama model.
+Actual tool selection and explanations depend on the selected model.
 Test mocks use Mockito's subclass mock maker to avoid requiring JVM agent attachment.
 
 ## Execution limits
@@ -95,7 +98,7 @@ allows four active executions and sixteen queued requests; excess requests retur
 model servers may continue computation after client cancellation; no further
 model or tool round is started once the application's deadline is reached.
 
-Regression tests use a real Ollama model adapter with simulated API responses to
+Regression tests use real OpenAI and Ollama model adapters with simulated API responses to
 verify tool-result feedback, loop limits and deadline cancellation. The HTTP body
 test leaves a response stream unfinished and verifies that the tool cancels it
 without waiting for EOF. No external model or website is called by these tests.

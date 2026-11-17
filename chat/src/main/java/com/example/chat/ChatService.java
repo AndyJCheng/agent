@@ -19,21 +19,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ChatService {
-    private static final String OLLAMA_SYSTEM_PROMPT = "You can use the checkUrlStatus tool to check the HTTP "
+    private static final String SYSTEM_PROMPT = "You can use the checkUrlStatus tool to check the HTTP "
             + "status of an allowed URL when the user asks about its availability or status. "
             + "Only claim a URL was checked if the tool returned a result. Explain the returned status code, "
             + "whether it is a 2xx success, or any error; do not invent a result.";
 
     private final Optional<OpenAiChatModel> openAiChatModel;
     private final Optional<OllamaChatModel> ollamaChatModel;
-    private final ToolCallback[] ollamaTools;
+    private final ToolCallback[] urlTools;
     private final BoundedChatExecutor execution;
 
     public ChatService(Optional<OpenAiChatModel> openAiChatModel, Optional<OllamaChatModel> ollamaChatModel,
             UrlStatusTool urlStatusTool, BoundedChatExecutor execution) {
         this.openAiChatModel = openAiChatModel;
         this.ollamaChatModel = ollamaChatModel;
-        this.ollamaTools = ToolCallbacks.from(urlStatusTool);
+        this.urlTools = ToolCallbacks.from(urlStatusTool);
         this.execution = execution;
     }
 
@@ -49,8 +49,12 @@ public class ChatService {
             OpenAiChatModel client = openAiChatModel.orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                             "OpenAI is disabled. Enable the openai profile and configure OPENAI_API_KEY."));
-            Prompt prompt = model.isEmpty() ? new Prompt(request.message())
-                    : new Prompt(request.message(), OpenAiChatOptions.builder().model(model).build());
+            OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().toolCallbacks(urlTools);
+            if (!model.isEmpty()) {
+                options.model(model);
+            }
+            Prompt prompt = new Prompt(List.of(new SystemMessage(SYSTEM_PROMPT),
+                    new UserMessage(request.message())), options.build());
             try {
                 response = execution.call(client, prompt);
             } catch (ResponseStatusException ex) {
@@ -61,11 +65,11 @@ public class ChatService {
         } else {
             OllamaChatModel client = ollamaChatModel.orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Ollama is disabled."));
-            OllamaOptions.Builder options = OllamaOptions.builder().toolCallbacks(ollamaTools);
+            OllamaOptions.Builder options = OllamaOptions.builder().toolCallbacks(urlTools);
             if (!model.isEmpty()) {
                 options.model(model);
             }
-            Prompt prompt = new Prompt(List.of(new SystemMessage(OLLAMA_SYSTEM_PROMPT),
+            Prompt prompt = new Prompt(List.of(new SystemMessage(SYSTEM_PROMPT),
                     new UserMessage(request.message())), options.build());
             try {
                 response = execution.call(client, prompt);
